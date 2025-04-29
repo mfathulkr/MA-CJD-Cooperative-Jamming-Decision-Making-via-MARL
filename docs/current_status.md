@@ -25,11 +25,13 @@ Bu rapor, MA-CJD projesinin mevcut kod tabanının durumunu (`main.py`, `simulat
 
 *   **`r_p` (Resource Consumption Penalty):** Belgelerdeki formüle (`r_p = –r_{p,max} – (r_{p,max} – r_{p,min}) (P_j – P_{j,min}) / (P_{j,max} – P_{j,min})`) uygun şekilde **uygulanmıştır**. Normalleştirilmiş güç `P_j` (0-1 aralığında) kullanılır. `rp_min` ve `rp_max` değerleri `simulation_config.yaml` dosyasındaki `environment_params.rewards` bölümünden alınır.
 *   **`r_d` (Tracking Penalty):** Bir radar `TRACK` durumuna geçtiğinde negatif bir ödül uygulanır. Bu cezanın büyüklüğü, radarın `simulation_config.yaml`'da tanımlanan statik `threat_level` değeri kullanılarak, yine `environment_params.rewards` içindeki `rd_min` ve `rd_max` arasında **doğrusal olarak ölçeklenir**. Belgelerde bahsedilen "tehdit seviyesine göre cezanın ölçeklenmesi" bu şekilde **uygulanmıştır**, ancak `threat_level` dinamik olarak değişmez.
+    *   **Not:** Radar `SEARCH` durumundayken anten açısı (`theta_a`) değişse de (`environment.py`), mevcut sinyal gücü ve kazanç hesaplamaları (`core/radar.py`) muhtemelen bu açının hedefe göre yönelimini dikkate almayıp **tepe kazancı varsaymaktadır**. Bu nedenle, değişen `theta_a`'nın şu anki `r_d`'yi tetikleyen tespit olasılığı üzerinde doğrudan bir etkisi **görünmemektedir**.
 *   **`r_j` (Jamming Success Probability Reward):** Bu ödülün hesaplanması **uygulanmıştır** ancak belgelerde bahsedilen bazı spesifik parametreler (`w`, `JNR0.5`) yerine daha temel fiziksel hesaplamalara dayanmaktadır.
     *   Hesaplama, jammer'ın seçtiği eylem tipine (Bastırma/Aldatma) göre değişir.
     *   Temel olarak, her radar için karıştırma olmadan algılama olasılığı (`pd_no_jamming`) ile karıştırma sonrası algılama olasılığını (`pd_true_target` veya `pd_false_target`) karşılaştırır.
     *   Algılama olasılıkları (`Pd`), `core/radar.py` içindeki `detection_probability` fonksiyonu (Albersheim yaklaşımı) kullanılarak hesaplanır. Bu fonksiyon, radar denklemi (`calculate_echo_power`), jammer denklemi (`received_power`) ve radarın `pulse_compression_gain` (Ga) ve `anti_jamming_factor` (D) gibi parametrelerini içeren Sinyal-Gürültü Oranı (SNR) ve Karıştırma-Sinyal Oranı (JNR) hesaplamalarına dayanır.
     *   Bastırma (`rj_suppression = pd_no_jamming - pd_true_target`) ve Aldatma (`rj_deception = 1.0 - pd_true_target`) için ayrı hesaplamalar yapılır. Kod, aldatma eylemi seçildiyse `rj_deception`'ı, bastırma seçildiyse `rj_suppression`'ı kullanır. Belgelerdeki gibi karmaşık bir birleştirme stratejisi (örn. `max`) yerine doğrudan eylem tipine göre seçim yapılır.
+    *   **Açıklama (Mevcut vs. Beklenen):** Mevcut `r_j` hesaplaması, simülasyonun temel fizik kurallarına (radar/jammer gücü, kazancı, mesafesi vb.) ve Albersheim formülüne dayanır. Önceki belgelerde veya beklentilerde ima edilen, `w` veya `JNR0.5` gibi daha soyut, özel parametrelere dayalı veya bastırma/aldatma etkilerini daha karmaşık bir şekilde birleştiren bir formülasyon **kullanılmamaktadır**. Mevcut yaklaşım daha temeldir.
 
 ## 5. Çoklu Ajan Yeteneği (Multi-Agent Capability)
 
@@ -85,12 +87,7 @@ Mevcut kod tabanı, MA-CJD için QMix ve MP-DQN tabanlı bir MARL çözümünün
 Ana farklılıklar/eksiklikler şunlardır:
 
 1.  **Statik Ortam:** Belgelerde ima edilen veya daha gerçekçi senaryolar için gerekli olan dinamik varlık hareketi eksiktir.
-2.  **`r_j` Uygulaması:** `r_j` ödülü, temel fiziksel prensiplere ve Albersheim'a dayanarak çalışır durumdadır, ancak önceki belgelerde belirtilen daha karmaşık formülasyonlardan (örn. `w`, `JNR0.5` parametreleri ile) farklıdır. Bu, öğrenilen politikanın hedeflenen davranıştan bir miktar sapmasına neden olabilir.
-
-**Önerilen Sonraki Adımlar:**
-
-1.  **Doğrulama ve Test:** Mevcut statik senaryoda öğrenilen politikanın mantıklılığını ve etkinliğini daha detaylı analiz etmek. Farklı radar/jammer yapılandırmaları ile test etmek.
-2.  **(Opsiyonel) Dinamik Ortam:** Proje gereksinimlerine bağlı olarak, varlık hareketi eklemek (örn. basit yörüngeler veya daha karmaşık hareket modelleri). Bu, durum/gözlem temsillerini ve potansiyel olarak ajan mimarisini etkileyebilir.
-3.  **(Opsiyonel) `r_j` Geliştirmesi:** Mevcut `r_j` hesaplamasının yeterliliği değerlendirilmeli. Gerekirse, belgelerdeki daha karmaşık formülasyonları (`w`, `JNR0.5` vb. parametreleri dahil ederek) uygulamak ve etkisini gözlemlemek.
+2.  **`r_j` Uygulaması:** `r_j` ödülü, temel fiziksel prensiplere ve Albersheim'a dayanarak çalışır durumdadır, ancak önceki belgelerde belirtilen daha karmaşık veya soyut parametrelere dayalı (`w`, `JNR0.5` vb.) formülasyonlardan farklıdır. Bu, öğrenilen politikanın hedeflenen davranıştan bir miktar sapmasına neden olabilir.
+3.  **(Opsiyonel) `r_j` Geliştirmesi:** Mevcut `r_j` hesaplamasının (temel fizik ve Albersheim tabanlı) yeterliliği değerlendirilmeli. Gerekirse, belgelerde ima edilen daha karmaşık veya soyut parametrelere dayalı formülasyonları (`w`, `JNR0.5` vb. parametreleri dahil ederek) uygulamak ve etkisini gözlemlemek.
 4.  **Hiperparametre Optimizasyonu:** Mevcut yapılandırma için daha iyi performans elde etmek amacıyla öğrenme oranı, epsilon decay, ağ boyutları gibi hiperparametreleri ayarlamak.
 5.  **Kod İyileştirmeleri:** Kod tekrarını azaltmak, yorumları güncellemek ve potansiyel optimizasyonları (örn. vektörleştirme) uygulamak.
