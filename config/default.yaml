@@ -1,0 +1,91 @@
+# Default Configuration for MA-CJD Training
+
+# --- General Parameters ---
+seed: 42                # Random seed
+use_cuda: True           # Use GPU if available (Set back to True)
+device: "cuda"           # Device to use ("cuda" or "cpu") - Set back to cuda
+
+# --- Environment Parameters ---
+env_args:
+  # These MUST be provided based on the specific scenario
+  num_jammers: 2         # Number of jammer agents (Set to 2 for comparison run)
+  num_radars: 2          # Number of radar systems (Set to 2 for comparison run)
+  num_radar_types: 4     # Number of distinct radar types (for one-hot encoding)
+  episode_limit: 100     # Maximum steps per episode
+  # --- Add other environment-specific parameters below ---
+  # Example placeholder parameters (replace with actual values from paper/scenario)
+  # radar_params: 
+  #   - { type: 0, Pt: 100, theta_m: 3, Ts: 5, pos: [10, 90] } 
+  #   - { type: 1, Pt: 120, theta_m: 2, Ts: 4, pos: [90, 90] }
+  #   - # ... etc for num_radars
+  # jammer_params:
+  #   - { pos: [10, 10], P_j_max: 10, P_j_min: 0 }
+  #   - { pos: [90, 10], P_j_max: 10, P_j_min: 0 }
+  #   - # ... etc for num_jammers
+  # reward_params:
+  #   r_d_range: [-1.2, -0.8] # Range for tracking penalty
+  #   r_p_min: -0.1          # Min resource penalty
+  #   r_p_max: -0.01         # Max resource penalty (Note: paper has these reversed?)
+
+# --- Algorithm Hyperparameters ---
+batch_size: 32           # Number of episodes in a training batch
+buffer_size: 5000        # Maximum number of episodes in the replay buffer
+lr: 0.000005           # Learning rate for Adam optimizer (Reduced significantly due to instability)
+gamma: 0.99            # Discount factor
+grad_norm_clip: 1.0      # Maximum gradient norm for clipping (Reduced drastically)
+target_update_interval: 200 # Steps between updating target networks
+start_training_steps: 1000 # Steps before starting training (Reduced for test)
+train_interval: 1        # Train learner every N environment steps (Set back to 1 for comparison)
+
+# --- Epsilon-Greedy Exploration ---
+epsilon_start: 1.0
+epsilon_finish: 0.05
+epsilon_anneal_time: 100000 # Anneal epsilon over N environment steps
+
+# --- Network Architecture ---
+# Agent Network (RNNAgent in networks.py)
+rnn_hidden_dim: 128      # GRU hidden state size in Q-network part
+actor_hidden_dim: 128    # Hidden layer size in Actor network part
+
+# Mixing Network (QMixer in networks.py)
+mixing_embed_dim: 64     # Embedding dimension in the main mixer layers
+hyper_hidden_dim: 128    # Hidden dimension for the hypernetworks generating weights/biases
+
+# --- Logging and Saving ---
+log_interval: 100         # Log average stats every N episodes (for console)
+log_interval_seconds: 10   # Log training stats every X seconds (Reduced for test)
+save_model: True         # Enable saving model checkpoints
+save_model_dir: "models/" # Directory to save models
+save_interval: 50        # Save model every X episodes (Reduced for test)
+
+# --- Compatibility/Unused ---
+# agent_output_type: "q"   # Often used in other QMix implementations, keep for potential compatibility 
+
+# --- Experiment Naming ---
+test_name: "ma_cjd_test" # Name for grouping logs/models 
+
+# --- General Training Parameters ---
+# Run name for logging
+run_name: "ma_cjd_test"
+# Use CUDA for training if available
+use_cuda: True
+# Path to the environment simulation config file
+env_config_path: "config/simulation_config.yaml"
+# Total number of environment steps to train for
+total_env_steps: 20000
+# Number of steps between logging training progress
+log_interval_steps: 1000 # Log every 1000 steps
+# Number of seconds between logging training progress (overrides log_interval_steps if both > 0)
+log_interval_seconds: 10 # Log every 10 seconds
+# Number of environment steps between testing phases
+test_interval: 10000
+# Number of episodes to run during testing
+test_nepisodes: 20
+# Flag to save models during training
+save_model: True
+# Interval (in steps) for saving models
+save_model_interval: 50000
+# Directory to save logs and models
+results_path: "logs"
+
+# --- QMIX Parameters --- 

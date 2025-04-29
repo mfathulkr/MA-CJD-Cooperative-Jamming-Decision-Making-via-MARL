@@ -1,0 +1,63 @@
+radars:
+  - type_id: 1
+    pt: 300.0 # Peak transmit power (Drastically Reduced for testing)
+    gt: 30 # Transmit antenna gain (dB)
+    gr: 30 # Receive antenna gain (dB)
+    wavelength: 0.03 # Radar wavelength (meters)
+    rcs: 1.0 # Radar Cross Section (m^2)
+    loss: 10 # Total radar loss (dB)
+    latm: 2 # Atmospheric attenuation (dB)
+    pn: 3 # Noise power (dB)
+    position: [400.0, 0.0] # Position on 2D plane
+    theta_m: 2.0 # Main Beam Width (degrees)
+    theta_a: 0.0 # Initial Beam Azimuth (degrees)
+    t_s: 5.0 # Search Scan Period (s)
+    pulse_compression_gain: 100.0 # Ga (linear)
+    anti_jamming_factor: 10.0 # D (linear)
+    threat_level: 0.8 # Threat level (e.g., 0.8-1.2)
+
+  - type_id: 2
+    pt: 180.0 # Peak transmit power (Drastically Reduced for testing)
+    gt: 25
+    gr: 25
+    wavelength: 0.03
+    rcs: 1.0
+    loss: 10
+    latm: 2
+    pn: 3
+    position: [-400.0, 0.0]
+    theta_m: 1.8 # Main Beam Width (degrees)
+    theta_a: 180.0 # Initial Beam Azimuth (degrees)
+    t_s: 4.0 # Search Scan Period (s)
+    pulse_compression_gain: 120.0 # Ga (linear)
+    anti_jamming_factor: 15.0 # D (linear)
+    threat_level: 1.2 # Threat level (e.g., 0.8-1.2)
+
+jammers:
+  - power: 1000 # Transmission power (Watts)
+    gj: 20 # Antenna gain
+    loss: 5 # Transmission loss
+    latm: 2 # Atmospheric loss
+    bj: 10 # Jammer signal bandwidth
+    position: [50.0, 50.0]
+
+  - power: 1000
+    gj: 20
+    loss: 5
+    latm: 2
+    bj: 10
+    position: [-50.0, -50.0]
+
+# Define the target the radars are trying to detect
+protected_target:
+  position: [0, 0] # Example: Target at the origin
+  rcs: 1.0 # Example: Target RCS (m^2)
+
+# Environment-level parameters
+environment_params:
+  max_radar_types: 4 # Maximum number of distinct radar types for one-hot encoding
+  rewards:
+    rd_min: -1.2 # Minimum penalty for radar tracking (rd)
+    rd_max: -0.8 # Maximum penalty for radar tracking (rd)
+    rp_min: -0.1 # Minimum penalty for resource consumption (rp) -> when power is max
+    rp_max: -0.01 # Maximum penalty for resource consumption (rp) -> when power is min
